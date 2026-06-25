@@ -1,16 +1,13 @@
-
 import pandas as pd
 import numpy as np
 import re
 
 # ── 0. LOAD ────────────────────────────────────────────────────────────────────
-df = pd.read_csv("C:\\Users\\User\\Downloads\\HEP_DATA.csv", encoding="utf-8", low_memory=False,index_col=0)
+df = pd.read_csv(r"C:\Users\User\Downloads\HEP_DATA.csv", encoding="utf-8", low_memory=False, index_col=0)
 print(f"Loaded {len(df)} rows × {len(df.columns)} columns")
 
 df = df.drop(columns=[c for c in df.columns if 'Unnamed' in str(c)])
-
 df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
-
 
 NUMERIC_COLS = [
     "installed_cap", "dam_height", "initial_cost", "final_cost",
@@ -24,7 +21,6 @@ def clean_numeric(val):
     if pd.isna(val):
         return np.nan
     s = str(val).replace("*", "").replace(",", "").strip()
-    # Handle entries like "0-LA" → take the numeric part
     s = re.sub(r"[^0-9.\-].*$", "", s)
     try:
         return float(s)
@@ -35,111 +31,59 @@ for col in NUMERIC_COLS:
     if col in df.columns:
         df[col] = df[col].apply(clean_numeric)
 
-# ── 3. DERIVED TARGET / FEATURE: COST OVERRUN & DURATION OVERRUN ───────────--
-df["cost_overrun"]     = ((df["final_cost"] - df["initial_cost"]) / df["initial_cost"])*100   
-df["duration_overrun"] = ((df["actual_dur"]  - df["planned_dur"])/ df["planned_dur"])*100   
+# ── 3. DERIVED TARGET / FEATURE: COST OVERRUN & DURATION OVERRUN ───────────
+df["cost_overrun"]     = ((df["final_cost"] - df["initial_cost"]) / df["initial_cost"]) * 100   
+df["duration_overrun"] = ((df["actual_dur"]  - df["planned_dur"]) / df["planned_dur"]) * 100   
 
-# ── 4. GEOLOGICAL / SOCIAL PROBLEM COLUMN ──────────────────────────────────--
-
+# ── 4. GEOLOGICAL / SOCIAL PROBLEM (ONE-HOT ENCODED + DILUTION PREVENTION) ─
 if "geological/social_prob" in df.columns:
-    raw = df["geological/social_prob"].fillna("no").str.lower()
+    raw_probs = df["geological/social_prob"].fillna("no").str.lower()
+    raw_probs = raw_probs.str.replace('yes-', '').str.replace('yea-', '')
+    
+    # Create One-Hot Encoded columns
+    prob_dummies = raw_probs.str.get_dummies(sep='+')
+    prob_dummies.columns = ['geo_prob_' + c.strip() for c in prob_dummies.columns]
+    
+    if 'geo_prob_no' in prob_dummies.columns:
+        prob_dummies = prob_dummies.drop(columns=['geo_prob_no'])
+        
+    # Prevent Feature Dilution: Group rare problems into an "other" category
+    min_freq_prob = 2 
+    rare_prob_cols = [c for c in prob_dummies.columns if prob_dummies[c].sum() < min_freq_prob]
+    
+    if rare_prob_cols:
+        prob_dummies['geo_prob_other'] = prob_dummies[rare_prob_cols].max(axis=1)
+        prob_dummies = prob_dummies.drop(columns=rare_prob_cols)
 
-  
-    PROB_CODES = {
-        "landslide":            1,
-        "sz":                   2,      # shear zone
-        "ff":                   4,      # forest fire
-        "wi":                   8,      # water ingress
-        "wateringress":         8,      # same as wi, merge
-        "rockburst":            16,
-        "penstockburst":        32,
-        "labour":               64,
-        "cloudburst":           128,
-        "flashflood":           256,
-        "silterosion":          512,
-        "fundstop":             1024,
-        "forcemajeur":          2048,
-        "forcemajure":          2048,   # typo variant, same code
-        "shivalik":             4096,
-        "suspended":            8192,
-        "foundationslump":      16384,
-        "delays":               32768,
-        "reservoirfloor":       65536,
-        "rollingboulder":       131072,
-        "poorlyconsolidatedrock": 262144,
-        "stresstransition":     524288,
-    }
+    df = pd.concat([df, prob_dummies], axis=1)
+    print(f"[geo_prob] Multi-label encoded. Grouped {len(rare_prob_cols)} rare problems into 'geo_prob_other'.")
 
-    def encode_prob(val):
-        if val == "no":
-            return 0
-        code = 0
-        for keyword, bitmask in PROB_CODES.items():
-            if keyword in val:
-                code |= bitmask  
-        return code
-
-    df["geo_prob_encoded"] = raw.apply(encode_prob)
-
-    # Drop all the individual prob_ columns
-    prob_cols = [c for c in df.columns if c.startswith("prob_") or c == "has_geo_prob"]
-    df.drop(columns=prob_cols, inplace=True)
-
-    print(f"[geo_prob] encoded into single column 'geo_prob_encoded' (bitmask)")
-    print(df[["geological/social_prob", "geo_prob_encoded"]].drop_duplicates().sort_values("geo_prob_encoded").to_string())
-
-# ── 5. CONTRACT TYPE 
-
-# ── CONTRACT TYPE → NUMERIC CODE ────────────────────────────────────────────
-# Single types: EPC=1, IR=2, SPLIT=3, BILATERAL=4, BOOT=5, MP=6,
-#               DEPARTMENTAL=7, TURNKEY=8
-# Combinations: digits concatenated e.g. IR+EPC → 21, IR+SPLIT → 23
-# Find the contract type column
+# ── 5. CONTRACT TYPE (ONE-HOT ENCODED + DILUTION PREVENTION) ───────────────
 contract_col = None
 for c in df.columns:
     if "contract" in c.lower() and "retend" not in c.lower():
         contract_col = c
         break
-CONTRACT_CODES = {
-    "EPC":          1,
-    "IR":           2,
-    "SPLIT":        3,
-    "BILATERAL":    4,
-    "BOOT":         5,
-    "MP":           6,
-    "DEPARTMENTAL": 7,
-    "TURNKEY":      8,
-}
 
 if contract_col:
-    def encode_contract(val):
-        if pd.isna(val) or str(val).strip() == "":
-            return np.nan
-        # split on + or / or space
-        parts = re.split(r"[+/\s]+", str(val).strip().upper())
-        codes = []
-        for part in parts:
-            part = part.strip()
-            if part in CONTRACT_CODES:
-                codes.append(str(CONTRACT_CODES[part]))
-        if not codes:
-            return np.nan
-        # sort so IR+EPC and EPC+IR give the same code
-        return int("".join(sorted(codes)))
+    raw_contracts = df[contract_col].fillna("UNKNOWN").str.upper()
+    raw_contracts = raw_contracts.str.replace(r'[/ ]+', '+', regex=True)
+    
+    contract_dummies = raw_contracts.str.get_dummies(sep='+')
+    contract_dummies.columns = ['contract_' + c for c in contract_dummies.columns]
+    
+    # Prevent Feature Dilution: Group rare contracts
+    min_freq_contract = 3
+    rare_contract_cols = [c for c in contract_dummies.columns if contract_dummies[c].sum() < min_freq_contract]
+    
+    if rare_contract_cols:
+        contract_dummies['contract_OTHER'] = contract_dummies[rare_contract_cols].max(axis=1)
+        contract_dummies = contract_dummies.drop(columns=rare_contract_cols)
+        
+    df = pd.concat([df, contract_dummies], axis=1)
+    print(f"[contract_type] Multi-label encoded. Grouped {len(rare_contract_cols)} rare contracts into 'contract_OTHER'.")
 
-    df["contract_encoded"] = df[contract_col].apply(encode_contract)
-
-    # drop the OHE columns and hybrid flag if they were already created
-    ohe_cols = [c for c in df.columns if c.startswith("contract_") 
-                and c != "contract_encoded"]
-    df.drop(columns=ohe_cols, inplace=True, errors="ignore")
-
-    print(f"[contract_type] encoded into single column 'contract_encoded'")
-    print(df[[contract_col, "contract_encoded"]].drop_duplicates()
-                                                .sort_values("contract_encoded")
-                                                .to_string())
-# ── 6. CONTRACT RETENDERED → ORDINAL ────────────────────────────────────────--
-
+# ── 6. CONTRACT RETENDERED → ORDINAL ────────────────────────────────────────
 retend_col = None
 for c in df.columns:
     if "retend" in c.lower():
@@ -147,117 +91,60 @@ for c in df.columns:
         break
 
 if retend_col:
-    RETEND_MAP = {
-        "NO": 0, "NO-LD": 1, "YES": 2,
-        "NA": np.nan, "": np.nan
-    }
-    df["retendered_encoded"] = (
-        df[retend_col].fillna("NA")
-                      .str.upper()
-                      .str.strip()
-                      .map(RETEND_MAP)
-    )
+    RETEND_MAP = {"NO": 0, "NO-LD": 1, "YES": 2, "NA": np.nan, "": np.nan}
+    df["retendered_encoded"] = df[retend_col].fillna("NA").str.upper().str.strip().map(RETEND_MAP)
     print(f"[retendered] ordinal encoded: NO=0, NO-LD=1, YES=2")
 
-# ── 7. SEISMIC ZONE → ORDINAL ───────────────────────────────────────────────--
-SEISMIC_MAP = {
-    "II":   1.0,
-    "III":  2.0,
-    "IV":   3.0,
-    "IV/V": 3.5,   # boundary zone
-    "V":    4.0,
-}
+# ── 7. SEISMIC ZONE → ORDINAL ───────────────────────────────────────────────
+SEISMIC_MAP = {"II": 2.0, "III": 3.0, "IV": 4.0, "IV/V": 4.5, "V": 5.0}
 if "seismic_zone" in df.columns:
-    df["seismic_encoded"] = (
-        df["seismic_zone"].fillna("").str.upper().str.strip().map(SEISMIC_MAP)
-    )
-    print(f"[seismic_zone] ordinal encoded: II=1 … V=4, IV/V=3.5")
+    df["seismic_encoded"] = df["seismic_zone"].fillna("").str.upper().str.strip().map(SEISMIC_MAP)
+    print(f"[seismic_zone] ordinal encoded: II=2 … V=5")
 
-# ── 8. CATEGORY → ORDINAL ───────────────────────────────────────────────────--
+# ── 8. CATEGORY → ORDINAL ───────────────────────────────────────────────────
 CATEGORY_MAP = {"small": 1, "large": 2, "mega": 3}
 if "category" in df.columns:
-    df["category_encoded"] = (
-        df["category"].fillna("").str.lower().str.strip().map(CATEGORY_MAP)
-    )
+    df["category_encoded"] = df["category"].fillna("").str.lower().str.strip().map(CATEGORY_MAP)
     print(f"[category] ordinal encoded: small=1, large=2, mega=3")
 
-# ── 9. STATE → BINARY ───────────────────────────────────────────────────────--
+# ── 9. STATE → BINARY ───────────────────────────────────────────────────────
 if "state" in df.columns:
-    df["state_encoded"] = (
-        df["state"].str.lower().str.strip() == "uttarakhand"
-    ).astype(int)
-    # 0 = Himachal Pradesh, 1 = Uttarakhand
+    df["state_encoded"] = (df["state"].str.lower().str.strip() == "uttarakhand").astype(int)
     print(f"[state] binary: 0=Himachal Pradesh, 1=Uttarakhand")
 
-# ── 10. FUNDER → FUNDER TYPE FLAGS ──────────────────────────────────────────--
-#
-## ── FUNDER → LABEL ENCODING (single column) ─────────────────────────────────
+# ── 10. FUNDER → LABEL ENCODING ─────────────────────────────────────────────
 if "funder" in df.columns:
     funder_clean = df["funder"].fillna("UNKNOWN").str.upper().str.strip()
-
-    # Define label order (loosely by funding type: multilateral → govt → psu → private → unknown)
     funder_order = [
-        # Multilateral / international
-        "WB", "ADB", "IFC", "JICA",
-        # Central government
-        "CG", "CG+NHPC", "CG+SG", "CG+SG+USSR", "CG+DEBT",
-        # State government
-        "SG", "SG+PFC",
-        # PSU / public financial institutions
-        "NTPC", "NHPC", "SJVN", "PFC", "PFC+SJVN", "THDC", "PSU",
-        "ADB/NTPC", "IFC+ADB+ICB", "IFC+ADHP",
-        # Consortium / mixed
-        "CONSORTIUM", "RENEWJAL", "UJVN", "EPPL+ICB", "LANCO+BANKS",
-        # Private
-        "PSC", "GMR", "BHILWARA",
-        # Unknown / other
-        "UNKNOWN",
+        "WB", "ADB", "IFC", "JICA", "CG", "CG+NHPC", "CG+SG", "CG+SG+USSR", "CG+DEBT",
+        "SG", "SG+PFC", "NTPC", "NHPC", "SJVN", "PFC", "PFC+SJVN", "THDC", "PSU",
+        "ADB/NTPC", "IFC+ADB+ICB", "IFC+ADHP", "CONSORTIUM", "RENEWJAL", "UJVN", 
+        "EPPL+ICB", "LANCO+BANKS", "PSC", "GMR", "BHILWARA", "UNKNOWN"
     ]
-
-    # Assign integer labels (1-indexed; 0 reserved for truly unseen values)
     funder_label_map = {name: idx + 1 for idx, name in enumerate(funder_order)}
-
     df["funder_encoded"] = funder_clean.map(funder_label_map).fillna(0).astype(int)
+    print(f"[funder] label encoded into single column")
 
-    print(f"[funder] label encoded into single column (0=unseen, 1–{len(funder_order)}=known)")
-    print(df[["funder", "funder_encoded"]].drop_duplicates().sort_values("funder_encoded").to_string())
-
-# ── 11. DROP RAW CATEGORICAL COLUMNS (keep originals for reference) ──────────
-# We keep the original columns so you can inspect them; drop in modeling step.
+# ── 11. DROP RAW CATEGORICAL COLUMNS ────────────────────────────────────────
 COLS_TO_DROP_FOR_ML = [
     "geological/social_prob", contract_col, retend_col,
     "seismic_zone", "category", "state", "funder",
-    "contract_type_clean",
-    "project_name",   # identifier, not a feature
-    "source",         # metadata
+    "contract_type_clean", "project_name", "source"
 ]
 COLS_TO_DROP_FOR_ML = [c for c in COLS_TO_DROP_FOR_ML if c and c in df.columns]
-
 df_ml = df.drop(columns=COLS_TO_DROP_FOR_ML)
 
-# ── 12. HANDLE REMAINING NA VALUES ──────────────────────────────────────────--
-# For numeric columns: fill with column median (safe for skewed distributions)
+# ── 12. HANDLE REMAINING NA VALUES ──────────────────────────────────────────
 numeric_df_cols = df_ml.select_dtypes(include=[np.number]).columns
 na_before = df_ml[numeric_df_cols].isna().sum().sum()
 
-df_ml[numeric_df_cols] = df_ml[numeric_df_cols].fillna(
-    df_ml[numeric_df_cols].median()
-)
+df_ml[numeric_df_cols] = df_ml[numeric_df_cols].fillna(df_ml[numeric_df_cols].median())
 na_after = df_ml.isna().sum().sum()
-print(f"\n[NA handling] filled {na_before} numeric NAs with column medians")
-print(f"             remaining NAs: {na_after}")
+print(f"\n[NA handling] filled {na_before} numeric NAs with column medians. Remaining NAs: {na_after}")
 
-# Drop any remaining all-NaN or non-numeric cols
 df_ml = df_ml.select_dtypes(include=[np.number])
 
-# ── 13. SAVE OUTPUT ─────────────────────────────────────────────────────────--
-out_path = "DA\hydropower_ml_ready.csv" 
+# ── 13. SAVE OUTPUT ─────────────────────────────────────────────────────────
+out_path = r"DA\hydropower_ml_readyv2.csv" 
 df_ml.to_csv(out_path, index=False)
-
 print(f"   Shape: {df_ml.shape[0]} rows x {df_ml.shape[1]} columns")
-
-# ── 14. FEATURE SUMMARY ─────────────────────────────────────────────────────--
-print("\n Final feature list")
-for col in df_ml.columns:
-    n_miss = df_ml[col].isna().sum()
-    print(f"  {col:<45}  dtype={df_ml[col].dtype}  NaN={n_miss}")
