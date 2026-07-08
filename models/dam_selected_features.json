@@ -1,0 +1,13 @@
+{
+  "selected_features": [
+    "cost_per_mw",
+    "initial_cost",
+    "R30mm_total",
+    "dist_to_nearest_pilgrim_km",
+    "steep_frac_25",
+    "slope_mean_deg",
+    "catchment_radius_km",
+    "CWD_mean"
+  ],
+  "lasso_alpha": 0.7669066222690807
+}

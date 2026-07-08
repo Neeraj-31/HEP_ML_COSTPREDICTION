@@ -1,0 +1,231 @@
+[Running] python -u "c:\Users\User\.vscode\HEP_ML\models\dam_rf.py"
+Dataset shape : (45, 9)  (n=45 samples, 9 features)
+Features      : ['cost_per_mw', 'initial_cost', 'actual_dur', 'R30mm_total', 'schedule_overrun_pct', 'dist_to_nearest_pilgrim_km', 'R100mm_total', 'glof_composite_score', 'steep_frac_25']
+
+
+------------------------------------------------------------
+Split: 75/25  (train=33, test=12)
+------------------------------------------------------------
+[RF] Best params: {'max_depth': 5, 'max_features': 0.5, 'min_samples_leaf': 1, 'n_estimators': 300}
+  Random Forest (75/25)         MAPE=3.324  NRMSE=1.003  R2=0.214
+
+------------------------------------------------------------
+Split: 65/35  (train=29, test=16)
+------------------------------------------------------------
+[RF] Best params: {'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 3, 'n_estimators': 200}
+  Random Forest (65/35)         MAPE=2.556  NRMSE=1.018  R2=0.194
+
+------------------------------------------------------------
+Leave-One-Out CV (LOO) � full dataset � Random Forest
+------------------------------------------------------------
+  Random Forest (LOO)           MAPE=1.670  NRMSE=0.942  R2=0.207
+
+=================================================================
+SUMMARY � Random Forest (all splits)
+=================================================================
+                label     MAPE    NRMSE       R2
+  Random Forest (LOO) 1.669920 0.942482 0.207391
+Random Forest (65/35) 2.555944 1.017577 0.193758
+Random Forest (75/25) 3.324459 1.003314 0.213709
+
+Feature importances (Random Forest 65/35):
+cost_per_mw                   0.320874
+steep_frac_25                 0.144460
+dist_to_nearest_pilgrim_km    0.106316
+actual_dur                    0.104927
+initial_cost                  0.085512
+glof_composite_score          0.076049
+schedule_overrun_pct          0.070103
+R30mm_total                   0.063473
+R100mm_total                  0.028287
+
+Prediction scatter plots -> dam_rf_predictions.png
+Feature importance chart  -> dam_rf_feature_importance.png
+Saved: dam_best_rf.pkl
+
+Best RF configuration overall: Random Forest (LOO)  (MAPE=1.670)
+
+----------------------------------------------------------------------------------------------------------------------------------
+Extended Metrics (Leave-One-Out CV) - Random Forest
+----------------------------------------------------------------------------------------------------------------------------------
+n:                     45
+pearson_r:             0.5182
+spearman_rho:          0.5628
+R2:                    0.2074
+Explained_Variance:    0.2628
+RMSE:                  104.1753
+NRMSE_pct_of_range:    17.0550
+MAE:                   67.9995
+MAPE_pct:              inf
+SMAPE_pct:             76.6752
+Max_Error:             420.4753
+TCI_Theil:             0.4110
+Bias_MBE:              -27.5548
+PBIAS_pct:             -25.7380
+Std_of_residuals:      100.4650
+NSE:                   0.2074
+Willmott_d:            0.5702
+RIoA:                  0.5971
+mKGE:                  0.3206
+MTSS:                  13692.1091
+NMSE:                  0.7926
+AIC:                   436.1467
+----------------------------------------------------------------------------------------------------------------------------------
+
+
+[Done] exited with code=0 in 38.803 seconds
+
+[Running] python -u "c:\Users\User\.vscode\HEP_ML\models\dam_xgb.py"
+Dataset shape : (45, 9)  (n=45 samples, 9 features)
+Features      : ['cost_per_mw', 'initial_cost', 'actual_dur', 'R30mm_total', 'schedule_overrun_pct', 'dist_to_nearest_pilgrim_km', 'R100mm_total', 'glof_composite_score', 'steep_frac_25']
+
+
+------------------------------------------------------------
+Split: 75/25  (train=33, test=12)
+------------------------------------------------------------
+[XGB] Best params: {'colsample_bytree': 1.0, 'learning_rate': 0.2, 'max_depth': 2, 'n_estimators': 100, 'reg_alpha': 0, 'reg_lambda': 1.0, 'subsample': 0.8}
+  XGBoost (75/25)               MAPE=2.638  NRMSE=1.014  R2=0.196
+
+------------------------------------------------------------
+Split: 65/35  (train=29, test=16)
+------------------------------------------------------------
+[XGB] Best params: {'colsample_bytree': 1.0, 'learning_rate': 0.05, 'max_depth': 2, 'n_estimators': 50, 'reg_alpha': 1.0, 'reg_lambda': 2.0, 'subsample': 0.8}
+  XGBoost (65/35)               MAPE=2.326  NRMSE=1.048  R2=0.145
+
+------------------------------------------------------------
+Leave-One-Out CV (LOO) � full dataset � XGBoost
+------------------------------------------------------------
+  XGBoost (LOO)                 MAPE=2.022  NRMSE=0.940  R2=0.211
+
+=================================================================
+SUMMARY � XGBoost (all splits)
+=================================================================
+          label     MAPE    NRMSE       R2
+  XGBoost (LOO) 2.021604 0.940212 0.211206
+XGBoost (65/35) 2.326087 1.047700 0.145319
+XGBoost (75/25) 2.638172 1.014354 0.196310
+
+Feature importances (XGBoost 65/35):
+cost_per_mw                   0.452367
+schedule_overrun_pct          0.138100
+steep_frac_25                 0.131039
+actual_dur                    0.115764
+dist_to_nearest_pilgrim_km    0.097470
+glof_composite_score          0.044272
+R100mm_total                  0.013213
+initial_cost                  0.005637
+R30mm_total                   0.002139
+
+Prediction scatter plots -> dam_xgb_predictions.png
+Feature importance chart  -> dam_xgb_feature_importance.png
+Saved: dam_best_xgb.pkl
+
+Best XGB configuration overall: XGBoost (LOO)  (MAPE=2.022)
+
+----------------------------------------------------------------------------------------------------------------------------------
+Extended Metrics (Leave-One-Out CV) - XGBoost
+----------------------------------------------------------------------------------------------------------------------------------
+n:                     45
+pearson_r:             0.5177
+spearman_rho:          0.4983
+R2:                    0.2112
+Explained_Variance:    0.2510
+RMSE:                  103.9243
+NRMSE_pct_of_range:    17.0139
+MAE:                   68.4270
+MAPE_pct:              inf
+SMAPE_pct:             73.1778
+Max_Error:             434.6712
+TCI_Theil:             0.4095
+Bias_MBE:              -23.3435
+PBIAS_pct:             -21.8044
+Std_of_residuals:      101.2686
+NSE:                   0.2112
+Willmott_d:            0.5320
+RIoA:                  0.5945
+mKGE:                  0.2687
+MTSS:                  13692.1091
+NMSE:                  0.7888
+AIC:                   435.9296
+----------------------------------------------------------------------------------------------------------------------------------
+
+
+[Done] exited with code=0 in 14.692 seconds
+
+[Running] python -u "c:\Users\User\.vscode\HEP_ML\models\dam_catboost.py"
+Dataset shape : (45, 9)  (n=45 samples, 9 features)
+Features      : ['cost_per_mw', 'initial_cost', 'actual_dur', 'R30mm_total', 'schedule_overrun_pct', 'dist_to_nearest_pilgrim_km', 'R100mm_total', 'glof_composite_score', 'steep_frac_25']
+
+
+------------------------------------------------------------
+Split: 75/25  (train=33, test=12)
+------------------------------------------------------------
+[CatBoost] Best params: {'depth': 3, 'iterations': 200, 'l2_leaf_reg': 5, 'learning_rate': 0.05}
+  CatBoost (75/25)              MAPE=3.448  NRMSE=1.061  R2=0.120
+
+------------------------------------------------------------
+Split: 65/35  (train=29, test=16)
+------------------------------------------------------------
+[CatBoost] Best params: {'depth': 3, 'iterations': 100, 'l2_leaf_reg': 1, 'learning_rate': 0.03}
+  CatBoost (65/35)              MAPE=2.483  NRMSE=1.026  R2=0.181
+
+------------------------------------------------------------
+Leave-One-Out CV (LOO) � full dataset � CatBoost
+------------------------------------------------------------
+  CatBoost (LOO)                MAPE=1.890  NRMSE=1.009  R2=0.092
+
+=================================================================
+SUMMARY � CatBoost (all splits)
+=================================================================
+           label     MAPE    NRMSE       R2
+  CatBoost (LOO) 1.889603 1.008730 0.092049
+CatBoost (65/35) 2.482753 1.025682 0.180865
+CatBoost (75/25) 3.448187 1.061191 0.120376
+
+Feature importances (CatBoost 65/35):
+cost_per_mw                   31.864418
+schedule_overrun_pct          14.231803
+steep_frac_25                 11.711643
+actual_dur                     9.129070
+dist_to_nearest_pilgrim_km     9.048530
+initial_cost                   8.229156
+glof_composite_score           8.149073
+R30mm_total                    4.052252
+R100mm_total                   3.584054
+
+Prediction scatter plots -> dam_catboost_predictions.png
+Feature importance chart  -> dam_catboost_feature_importance.png
+Saved: dam_best_catboost.pkl
+
+Best CatBoost configuration overall: CatBoost (LOO)  (MAPE=1.890)
+
+-----------------------------------------------------------------
+Extended Metrics (Leave-One-Out CV) - CatBoost
+-----------------------------------------------------------------
+n:                     45
+pearson_r:             0.4229
+spearman_rho:          0.5495
+R2:                    0.0920
+Explained_Variance:    0.1777
+RMSE:                  111.4978
+NRMSE_pct_of_range:    18.2539
+MAE:                   73.7966
+MAPE_pct:              inf
+SMAPE_pct:             83.3645
+Max_Error:             446.5490
+TCI_Theil:             0.4562
+Bias_MBE:              -34.2360
+PBIAS_pct:             -31.9787
+Std_of_residuals:      106.1115
+NSE:                   0.0920
+Willmott_d:            0.4740
+RIoA:                  0.5627
+mKGE:                  0.2129
+MTSS:                  13692.1091
+NMSE:                  0.9080
+AIC:                   442.2605
+-----------------------------------------------------------------
+
+
+[Done] exited with code=0 in 25.094 seconds
+

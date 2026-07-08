@@ -1,0 +1,217 @@
+[Running] python -u "c:\Users\User\.vscode\HEP_ML\models\dam_rf.py"
+Dataset shape : (45, 8)  (n=45 samples, 8 features)
+Features      : ['cost_per_mw', 'initial_cost', 'R30mm_total', 'dist_to_nearest_pilgrim_km', 'steep_frac_25', 'slope_mean_deg', 'catchment_radius_km', 'CWD_mean']
+
+
+------------------------------------------------------------
+Split: 75/25  (train=33, test=12)
+------------------------------------------------------------
+[RF] Best params: {'max_depth': 3, 'max_features': 'log2', 'min_samples_leaf': 2, 'n_estimators': 100}
+  Random Forest (75/25)         MAPE=3.374  NRMSE=0.952  R2=0.292
+
+------------------------------------------------------------
+Split: 65/35  (train=29, test=16)
+------------------------------------------------------------
+[RF] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 3, 'n_estimators': 300}
+  Random Forest (65/35)         MAPE=2.442  NRMSE=0.949  R2=0.299
+
+------------------------------------------------------------
+Leave-One-Out CV (LOO) � full dataset � Random Forest
+------------------------------------------------------------
+  Random Forest (LOO)           MAPE=1.622  NRMSE=0.876  R2=0.316
+
+=================================================================
+SUMMARY � Random Forest (all splits)
+=================================================================
+                label     MAPE    NRMSE       R2
+  Random Forest (LOO) 1.621573 0.875827 0.315539
+Random Forest (65/35) 2.441680 0.948685 0.299232
+Random Forest (75/25) 3.373699 0.952293 0.291645
+
+Feature importances (Random Forest 65/35):
+cost_per_mw                   0.371356
+slope_mean_deg                0.167671
+steep_frac_25                 0.110620
+catchment_radius_km           0.093643
+R30mm_total                   0.074479
+CWD_mean                      0.062862
+initial_cost                  0.060884
+dist_to_nearest_pilgrim_km    0.058485
+
+Prediction scatter plots -> dam_rf_predictions.png
+Feature importance chart  -> dam_rf_feature_importance.png
+Saved: dam_best_rf.pkl
+
+Best RF configuration overall: Random Forest (LOO)  (MAPE=1.622)
+
+----------------------------------------------------------------------------------------------------------------------------------
+Extended Metrics (Leave-One-Out CV) - Random Forest
+----------------------------------------------------------------------------------------------------------------------------------
+n:                     45
+pearson_r:             0.6220
+spearman_rho:          0.6117
+R2:                    0.3155
+Explained_Variance:    0.3698
+RMSE:                  96.8076
+NRMSE_pct_of_range:    15.8488
+MAE:                   64.7697
+MAPE_pct:              inf
+SMAPE_pct:             77.8796
+Max_Error:             370.2729
+TCI_Theil:             0.3768
+Bias_MBE:              -27.2584
+PBIAS_pct:             -25.4611
+Std_of_residuals:      92.8908
+NSE:                   0.3155
+Willmott_d:            0.6635
+RIoA:                  0.6162
+mKGE:                  0.4308
+MTSS:                  13692.1091
+NMSE:                  0.6845
+AIC:                   427.5453
+----------------------------------------------------------------------------------------------------------------------------------
+
+
+[Done] exited with code=0 in 46.168 seconds
+
+[Running] python -u "c:\Users\User\.vscode\HEP_ML\models\dam_catboost.py"
+Dataset shape : (45, 8)  (n=45 samples, 8 features)
+Features      : ['cost_per_mw', 'initial_cost', 'R30mm_total', 'dist_to_nearest_pilgrim_km', 'steep_frac_25', 'slope_mean_deg', 'catchment_radius_km', 'CWD_mean']
+
+
+------------------------------------------------------------
+Split: 75/25  (train=33, test=12)
+------------------------------------------------------------
+[CatBoost] Best params: {'depth': 3, 'iterations': 100, 'l2_leaf_reg': 5, 'learning_rate': 0.05}
+  CatBoost (75/25)              MAPE=3.332  NRMSE=0.930  R2=0.324
+
+------------------------------------------------------------
+Split: 65/35  (train=29, test=16)
+------------------------------------------------------------
+[CatBoost] Best params: {'depth': 2, 'iterations': 100, 'l2_leaf_reg': 3, 'learning_rate': 0.03}
+  CatBoost (65/35)              MAPE=2.952  NRMSE=1.002  R2=0.218
+
+------------------------------------------------------------
+Leave-One-Out CV (LOO) � full dataset � CatBoost
+------------------------------------------------------------
+  CatBoost (LOO)                MAPE=1.699  NRMSE=0.900  R2=0.276
+
+=================================================================
+SUMMARY � CatBoost (all splits)
+=================================================================
+           label     MAPE    NRMSE       R2
+  CatBoost (LOO) 1.698978 0.900461 0.276494
+CatBoost (65/35) 2.952360 1.002140 0.218035
+CatBoost (75/25) 3.332311 0.930254 0.324053
+
+Feature importances (CatBoost 65/35):
+cost_per_mw                   42.910544
+catchment_radius_km           15.180644
+R30mm_total                   10.016670
+slope_mean_deg                 9.642678
+dist_to_nearest_pilgrim_km     6.904269
+steep_frac_25                  6.451181
+initial_cost                   4.562299
+CWD_mean                       4.331715
+
+Prediction scatter plots -> dam_catboost_predictions.png
+Feature importance chart  -> dam_catboost_feature_importance.png
+Saved: dam_best_catboost.pkl
+
+Best CatBoost configuration overall: CatBoost (LOO)  (MAPE=1.699)
+
+-----------------------------------------------------------------
+Extended Metrics (Leave-One-Out CV) - CatBoost
+-----------------------------------------------------------------
+n:                     45
+pearson_r:             0.6888
+spearman_rho:          0.6540
+R2:                    0.2765
+Explained_Variance:    0.3566
+RMSE:                  99.5305
+NRMSE_pct_of_range:    16.2946
+MAE:                   62.8380
+MAPE_pct:              inf
+SMAPE_pct:             68.3258
+Max_Error:             385.1303
+TCI_Theil:             0.4098
+Bias_MBE:              -33.1242
+PBIAS_pct:             -30.9402
+Std_of_residuals:      93.8569
+NSE:                   0.2765
+Willmott_d:            0.5965
+RIoA:                  0.6276
+mKGE:                  0.3350
+MTSS:                  13692.1091
+NMSE:                  0.7235
+AIC:                   430.0418
+-----------------------------------------------------------------
+
+
+[Done] exited with code=0 in 27.258 seconds
+
+[Running] python -u "c:\Users\User\.vscode\HEP_ML\models\dam_gpr.py"
+Dataset shape : (45, 8)  (n=45 samples, 8 features)
+Features      : ['cost_per_mw', 'initial_cost', 'R30mm_total', 'dist_to_nearest_pilgrim_km', 'steep_frac_25', 'slope_mean_deg', 'catchment_radius_km', 'CWD_mean']
+
+
+------------------------------------------------------------
+Split: 75/25  (train=33, test=12)
+------------------------------------------------------------
+[GPR] Best params: alpha=0.01, kernel=0.854**2 * Matern(length_scale=1.88, nu=1.5) + WhiteKernel(noise_level=0.439)
+  GPR (75/25)                   MAPE=3.005  NRMSE=1.046  R2=0.146
+
+------------------------------------------------------------
+Split: 65/35  (train=29, test=16)
+------------------------------------------------------------
+[GPR] Best params: alpha=0.001, kernel=0.777**2 * RBF(length_scale=1.51) + WhiteKernel(noise_level=0.503)
+  GPR (65/35)                   MAPE=2.110  NRMSE=1.033  R2=0.169
+
+------------------------------------------------------------
+Leave-One-Out CV (LOO) � full dataset � GPR
+------------------------------------------------------------
+  GPR (LOO)                     MAPE=1.825  NRMSE=0.935  R2=0.219
+
+=================================================================
+SUMMARY � GPR (all splits)
+=================================================================
+      label     MAPE    NRMSE       R2
+  GPR (LOO) 1.825253 0.935440 0.219192
+GPR (65/35) 2.109630 1.033109 0.168958
+GPR (75/25) 3.004538 1.045536 0.146139
+
+Prediction scatter plots (with 95% CI) -> dam_gpr_predictions.png
+Saved: dam_best_gpr.pkl
+
+Best GPR configuration overall: GPR (LOO)  (MAPE=1.825)
+
+-----------------------------------------------------------------
+Extended Metrics (Leave-One-Out CV) - GPR
+-----------------------------------------------------------------
+n:                     45
+pearson_r:             0.5328
+spearman_rho:          0.6207
+R2:                    0.2192
+Explained_Variance:    0.2589
+RMSE:                  103.3968
+NRMSE_pct_of_range:    16.9276
+MAE:                   65.5451
+MAPE_pct:              inf
+SMAPE_pct:             71.6680
+Max_Error:             463.9292
+TCI_Theil:             0.4085
+Bias_MBE:              -23.3311
+PBIAS_pct:             -21.7928
+Std_of_residuals:      100.7302
+NSE:                   0.2192
+Willmott_d:            0.5419
+RIoA:                  0.6116
+mKGE:                  0.2673
+MTSS:                  13692.1091
+NMSE:                  0.7808
+AIC:                   433.4717
+-----------------------------------------------------------------
+
+
+[Done] exited with code=0 in 13.95 seconds
+
